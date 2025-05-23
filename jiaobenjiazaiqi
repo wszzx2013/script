@@ -1,0 +1,4 @@
+--/////数学谋杀案\\\\\--
+if game.PlaceId == 7091388561 then
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wszzx2013/script/refs/heads/main/shuxuemoushaan"))()
+end
