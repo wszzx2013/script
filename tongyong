@@ -1,3 +1,4 @@
+local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/MSESP/refs/heads/main/source.luau"))()
 local scriptui = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua"))()
 jbui = scriptui
 print("土hub执行成功 正在加载...")
@@ -480,74 +481,6 @@ task.spawn(function()
     end
 end)
 ----右边----
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local RootPart = Character:WaitForChild("HumanoidRootPart")
-
--- 配置参数
-local WallhopConfig = {
-    JumpPower = 50,       -- 跳跃高度
-    RotateAngle = 90,     -- 旋转角度（度）
-    RotateTime = 0.15,    -- 旋转时间（秒）
-    Cooldown = 0.3        -- 冷却时间（防连跳）
-}
-
-local lastJumpTime = 0
-
--- 平滑旋转函数
-local function RotateCharacter(angle)
-    local startTime = tick()
-    local startCFrame = RootPart.CFrame
-    local endCFrame = startCFrame * CFrame.Angles(0, math.rad(angle), 0)
-    
-    while tick() - startTime < WallhopConfig.RotateTime do
-        local alpha = (tick() - startTime) / WallhopConfig.RotateTime
-        RootPart.CFrame = startCFrame:Lerp(endCFrame, alpha)
-        RunService.Heartbeat:Wait()
-    end
-end
-
--- 跳跃时旋转
-local function OnJumpRequest()
-    if tick() - lastJumpTime < WallhopConfig.Cooldown then return end
-    lastJumpTime = tick()
-    
-    -- 执行旋转（异步防止卡顿）
-    task.spawn(function()
-        -- 向右旋转90度
-        RotateCharacter(WallhopConfig.RotateAngle)
-        
-        -- 短暂延迟后回正（-90度）
-        task.wait(0.1)
-        RotateCharacter(-WallhopConfig.RotateAngle)
-    end)
-    
-    -- 强制跳跃
-    Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-end
-
--- 监听空格键按下
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.Space then
-        OnJumpRequest()
-    end
-end)
-
--- 角色重生时重新绑定
-Player.CharacterAdded:Connect(function(newChar)
-    Character = newChar
-    Humanoid = newChar:WaitForChild("Humanoid")
-    RootPart = newChar:WaitForChild("HumanoidRootPart")
-end)
-
-
-
 
 
 local shijueTab = Window:AddTab("设置", "eye")
