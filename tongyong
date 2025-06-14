@@ -1,0 +1,571 @@
+local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/MSESP/refs/heads/main/source.luau"))()
+local scriptui = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua"))()
+jbui = scriptui
+print("土hub执行成功 正在加载...")
+print("感谢使用土hub")
+local Window = jbui:CreateWindow({
+    Title = "土 hub",
+    Footer = "通用",
+    ToggleKeybind = Enum.KeyCode.RightShift,
+    Center = true,
+    AutoShow = true,
+    NotifySide = Rigst,
+    ShowCustomCursor = false
+})
+
+local xinxiTab = Window:AddTab("信息", "info")
+local Groupbox1 = xinxiTab:AddLeftGroupbox("信息")
+local Label = Groupbox1:AddLabel("你的用户名:"..game.Players.LocalPlayer.Character.Name)
+local Label = Groupbox1:AddLabel("你的名字:"..game.Players.LocalPlayer.DisplayName)
+local Label = Groupbox1:AddLabel("你的客户端id:"..game:GetService("RbxAnalyticsService"):GetClientId())
+local Label = Groupbox1:AddLabel("你的服务器id:"..game.GameId)
+local Label = Groupbox1:AddLabel("你的账号年龄:"..game.Players.LocalPlayer.AccountAge.."天")
+local Label = Groupbox1:AddLabel("你的账号ID:"..game.Players.LocalPlayer.UserId)
+local Label = Groupbox1:AddLabel("你的注入器:"..identifyexecutor())
+
+local renwuTab = Window:AddTab("人物", "user-round-cog")
+local Groupbox1 = renwuTab:AddLeftGroupbox("数据")
+local Groupbox2 = renwuTab:AddRightGroupbox("其他")
+--左边
+local Player = game:GetService("Players").LocalPlayer
+local RunService = game:GetService("RunService")
+
+local speedSystem = {
+    Enabled = false,
+    TargetSpeed = 16,
+    OriginalSpeed = nil,
+    MinSpeed = 0,
+    MaxSpeed = 100,
+    ProtectionLevel = 3,
+    MemoryHack = false
+}
+
+local function getTrueSpeed()
+    local char = Player.Character
+    if char then
+
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then return humanoid.WalkSpeed end
+
+        local movement = char:FindFirstChild("Movement") 
+        if movement and movement:FindFirstChild("Speed") then
+            return movement.Speed.Value
+        end
+    end
+    return 16
+end
+
+
+local Toggle1 = Groupbox1:AddToggle("speed_control", {
+    Text = "速度控制",
+    Default = false,
+    Tooltip = "启用速度修改",
+    Callback = function(Value)
+        speedSystem.Enabled = Value
+        applySpeedSystem()
+    end
+})
+
+local Slider1 = Groupbox1:AddSlider("speed_value", {
+    Text = "速度 ("..speedSystem.MinSpeed.."-"..speedSystem.MaxSpeed..")",
+    Default = getTrueSpeed(),
+    Min = speedSystem.MinSpeed,
+    Max = speedSystem.MaxSpeed,
+    Callback = function(Value)
+        speedSystem.TargetSpeed = Value
+        if speedSystem.Enabled then
+            applySpeedSystem()
+        end
+    end
+})
+
+local function applySpeedSystem()
+    local char = Player.Character
+    if not char then return end
+
+    if speedSystem.OriginalSpeed == nil then
+        speedSystem.OriginalSpeed = getTrueSpeed()
+    end
+
+    if speedSystem.Enabled then
+
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = speedSystem.TargetSpeed
+            humanoid:SetAttribute("RealSpeed", speedSystem.TargetSpeed)
+        end
+
+
+        local movement = char:FindFirstChild("Movement")
+        if movement and movement:FindFirstChild("Speed") then
+            movement.Speed.Value = speedSystem.TargetSpeed
+        end
+
+
+        if speedSystem.MemoryHack and PROTECTED_MEMORY_ACCESS then
+            writeMemory(char, "WalkSpeed", speedSystem.TargetSpeed)
+        end
+    else
+
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = speedSystem.OriginalSpeed
+        end
+    end
+end
+
+local function protectionSystem()
+    if not speedSystem.Enabled then return end
+    
+    local char = Player.Character
+    if not char then return end
+
+    local now = tick()
+    if now % 0.5 < 0.016 then
+        applySpeedSystem()
+    end
+
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.WalkSpeed ~= speedSystem.TargetSpeed then
+        humanoid.WalkSpeed = speedSystem.TargetSpeed
+    end
+end
+
+Player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+
+    if speedSystem.Enabled then
+        speedSystem.OriginalSpeed = nil
+        applySpeedSystem()
+    end
+
+    Slider1:SetValue(getTrueSpeed())
+end)
+
+RunService.Heartbeat:Connect(protectionSystem)
+
+task.spawn(function()
+    task.wait()
+    local actualSpeed = getTrueSpeed()
+    Slider1:SetValue(actualSpeed)
+    speedSystem.TargetSpeed = actualSpeed
+    if Toggle1.Value then
+        applySpeedSystem()
+    end
+end)
+
+local Player = game:GetService("Players").LocalPlayer
+local RunService = game:GetService("RunService")
+
+local jumpSystem = {
+    Enabled = false,
+    JumpPower = 50,
+    OriginalJump = 50,
+    MinJump = 0,
+    MaxJump = 500,
+    SuperJump = false,
+    AntiReset = true
+}
+
+local function getTrueJumpPower()
+    pcall(function()
+        if Player.Character then
+            local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                jumpSystem.OriginalJump = humanoid.JumpPower
+                return humanoid.JumpPower
+            end
+        end
+    end)
+    return 50
+end
+
+local JumpToggle = Groupbox1:AddToggle("jump_control", {
+    Text = "跳跃控制",
+    Default = false,
+    Tooltip = "启用跳跃高度修改",
+    Callback = function(Value)
+        jumpSystem.Enabled = Value
+        applyJumpSettings()
+    end
+})
+
+local JumpSlider = Groupbox1:AddSlider("jump_power", {
+    Text = "跳跃高度 ("..jumpSystem.MinJump.."-"..jumpSystem.MaxJump..")",
+    Default = getTrueJumpPower(),
+    Min = jumpSystem.MinJump,
+    Max = jumpSystem.MaxJump,
+    Rounding = 1,
+    Compact = false,
+    Callback = function(Value)
+        jumpSystem.JumpPower = Value
+        if jumpSystem.Enabled then
+            applyJumpSettings()
+        end
+    end
+})
+
+
+local function applyJumpSettings()
+    if not Player.Character then return end
+    
+    local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+
+    if jumpSystem.OriginalJump == 50 then
+        jumpSystem.OriginalJump = humanoid.JumpPower
+    end
+
+    if jumpSystem.Enabled then
+
+        humanoid.JumpPower = jumpSystem.JumpPower
+        
+
+        if jumpSystem.SuperJump then
+            humanoid:SetAttribute("IgnoreGravity", true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        else
+            humanoid:SetAttribute("IgnoreGravity", false)
+        end
+    else
+
+        humanoid.JumpPower = jumpSystem.OriginalJump
+        humanoid:SetAttribute("IgnoreGravity", false)
+    end
+end
+
+
+local function jumpProtection()
+    if not jumpSystem.Enabled or not jumpSystem.AntiReset then return end
+    
+    if Player.Character then
+        local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+
+            humanoid:SetAttribute("RealJumpPower", jumpSystem.JumpPower)
+            if humanoid.JumpPower ~= jumpSystem.JumpPower then
+                humanoid.JumpPower = jumpSystem.JumpPower
+            end
+
+            if jumpSystem.SuperJump and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end
+
+Player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+
+    if jumpSystem.Enabled then
+        applyJumpSettings()
+    end
+
+    JumpSlider:SetValue(getTrueJumpPower())
+end)
+
+RunService.Heartbeat:Connect(jumpProtection)
+
+task.spawn(function()
+    task.wait()
+    local currentJump = getTrueJumpPower()
+    JumpSlider:SetValue(currentJump)
+    jumpSystem.JumpPower = currentJump
+    
+    if JumpToggle.Value then
+        applyJumpSettings()
+    end
+end)
+
+local Player = game:GetService("Players").LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local noclipSystem = {
+    Enabled = false,
+    Mode = "Standard",
+    Transparency = 0.5,
+    CollisionGroups = {},
+    OriginalProperties = {},
+    Hotkey = Enum.KeyCode.F
+}
+
+local NoclipToggle = Groupbox1:AddToggle("noclip_mode", {
+    Text = "穿墙模式",
+    Default = false,
+    Tooltip = "启用穿墙功能",
+    Callback = function(Value)
+        noclipSystem.Enabled = Value
+        applyNoclipSettings()
+    end
+})
+
+local NoclipMode = Groupbox1:AddDropdown("noclip_type", {
+    Text = "穿墙类型",
+    Default = "Standard",
+    Tooltip = "选择穿墙实现方式",
+    Values = {"Standard"},
+    Callback = function(Value)
+        noclipSystem.Mode = Value
+        if noclipSystem.Enabled then
+            applyNoclipSettings()
+        end
+    end
+})
+
+local function applyNoclipSettings()
+    if not Player.Character then return end
+
+    if not noclipSystem.OriginalProperties.Saved then
+        saveOriginalProperties()
+    end
+
+    if noclipSystem.Enabled then
+
+        if noclipSystem.Mode == "Standard" then
+            standardNoclip()
+        elseif noclipSystem.Mode == "Ghost" then
+            ghostMode()
+        elseif noclipSystem.Mode == "Phase" then
+            phaseMode()
+        end
+        updateCharacterAppearance()
+    else
+        restoreOriginalProperties()
+    end
+end
+
+local function standardNoclip()
+    for _, part in ipairs(Player.Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end
+
+local function ghostMode()
+    for _, part in ipairs(Player.Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+            part.Transparency = noclipSystem.Transparency
+            part.CastShadow = false
+        end
+    end
+end
+
+local function phaseMode()
+    if not game:GetService("Workspace"):FindFirstChild("CollisionGroups") then
+        local collisionService = Instance.new("CollisionGroupsService")
+        collisionService.Name = "CollisionGroups"
+        collisionService.Parent = game:GetService("Workspace")
+    end
+
+    if not game:GetService("Workspace").CollisionGroups:FindFirstChild("PhaseGroup") then
+        game:GetService("Workspace").CollisionGroups:CreateGroup("PhaseGroup")
+    end
+
+    for _, part in ipairs(Player.Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            game:GetService("Workspace").CollisionGroups:SetPartCollisionGroup(part, "PhaseGroup")
+        end
+    end
+
+    for _, group in ipairs(game:GetService("Workspace").CollisionGroups:GetRegisteredGroups()) do
+        if group ~= "PhaseGroup" then
+            game:GetService("Workspace").CollisionGroups:CollisionGroupSetCollidable("PhaseGroup", group, false)
+        end
+    end
+end
+
+local function updateCharacterAppearance()
+    if not Player.Character then return end
+    
+    if noclipSystem.Mode == "Ghost" then
+        for _, part in ipairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = noclipSystem.Transparency
+            end
+        end
+    else
+        for _, part in ipairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 0
+            end
+        end
+    end
+end
+
+local function saveOriginalProperties()
+    if not Player.Character then return end
+    
+    noclipSystem.OriginalProperties = {
+        Saved = true,
+        Collision = {},
+        Transparency = {}
+    }
+    
+    for _, part in ipairs(Player.Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            noclipSystem.OriginalProperties.Collision[part] = part.CanCollide
+            noclipSystem.OriginalProperties.Transparency[part] = part.Transparency
+        end
+    end
+end
+
+local function restoreOriginalProperties()
+    if not noclipSystem.OriginalProperties.Saved then return end
+    
+    for part, canCollide in pairs(noclipSystem.OriginalProperties.Collision) do
+        if part and part.Parent then
+            part.CanCollide = canCollide
+        end
+    end
+    
+    for part, transparency in pairs(noclipSystem.OriginalProperties.Transparency) do
+        if part and part.Parent then
+            part.Transparency = transparency
+        end
+    end
+
+    if game:GetService("Workspace"):FindFirstChild("CollisionGroups") then
+        for _, part in ipairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                game:GetService("Workspace").CollisionGroups:SetPartCollisionGroup(part, "Default")
+            end
+        end
+    end
+end
+
+local function noclipProtection()
+    if not noclipSystem.Enabled then return end
+    if not Player.Character then return end
+
+    if noclipSystem.Mode == "Standard" then
+        standardNoclip()
+    elseif noclipSystem.Mode == "Ghost" then
+        ghostMode()
+    end
+end
+
+Player.CharacterAdded:Connect(function(character)
+    task.wait(0.5)
+    
+    if noclipSystem.Enabled then
+        noclipSystem.OriginalProperties.Saved = false
+        applyNoclipSettings()
+    end
+
+    character.DescendantAdded:Connect(function(part)
+        if noclipSystem.Enabled and part:IsA("BasePart") then
+            if noclipSystem.Mode == "Standard" then
+                part.CanCollide = false
+            elseif noclipSystem.Mode == "Ghost" then
+                part.CanCollide = false
+                part.Transparency = noclipSystem.Transparency
+            elseif noclipSystem.Mode == "Phase" then
+                if game:GetService("Workspace"):FindFirstChild("CollisionGroups") then
+                    game:GetService("Workspace").CollisionGroups:SetPartCollisionGroup(part, "PhaseGroup")
+                end
+            end
+        end
+    end)
+end)
+
+RunService.Stepped:Connect(noclipProtection)
+
+task.spawn(function()
+    task.wait()
+    if NoclipToggle.Value then
+        applyNoclipSettings()
+    end
+end)
+----右边----
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+
+-- 配置参数
+local WallhopConfig = {
+    JumpPower = 50,       -- 跳跃高度
+    RotateAngle = 90,     -- 旋转角度（度）
+    RotateTime = 0.15,    -- 旋转时间（秒）
+    Cooldown = 0.3        -- 冷却时间（防连跳）
+}
+
+local lastJumpTime = 0
+
+-- 平滑旋转函数
+local function RotateCharacter(angle)
+    local startTime = tick()
+    local startCFrame = RootPart.CFrame
+    local endCFrame = startCFrame * CFrame.Angles(0, math.rad(angle), 0)
+    
+    while tick() - startTime < WallhopConfig.RotateTime do
+        local alpha = (tick() - startTime) / WallhopConfig.RotateTime
+        RootPart.CFrame = startCFrame:Lerp(endCFrame, alpha)
+        RunService.Heartbeat:Wait()
+    end
+end
+
+-- 跳跃时旋转
+local function OnJumpRequest()
+    if tick() - lastJumpTime < WallhopConfig.Cooldown then return end
+    lastJumpTime = tick()
+    
+    -- 执行旋转（异步防止卡顿）
+    task.spawn(function()
+        -- 向右旋转90度
+        RotateCharacter(WallhopConfig.RotateAngle)
+        
+        -- 短暂延迟后回正（-90度）
+        task.wait(0.1)
+        RotateCharacter(-WallhopConfig.RotateAngle)
+    end)
+    
+    -- 强制跳跃
+    Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+end
+
+-- 监听空格键按下
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        OnJumpRequest()
+    end
+end)
+
+-- 角色重生时重新绑定
+Player.CharacterAdded:Connect(function(newChar)
+    Character = newChar
+    Humanoid = newChar:WaitForChild("Humanoid")
+    RootPart = newChar:WaitForChild("HumanoidRootPart")
+end)
+
+
+
+
+
+local shijueTab = Window:AddTab("设置", "eye")
+local Tabbox1 = shijueTab:AddLeftTabbox("视觉")
+local Tab1 = Tabbox1:AddTab("开关")
+local Tab2 = Tabbox1:AddTab("选项")
+
+
+
+
+local shezhiTab = Window:AddTab("设置", "settings")
+local Groupbox1 = shezhiTab:AddLeftGroupbox("ui设置")
+local Button = Groupbox1:AddButton({
+    Text = "销毁ui",
+    Func = function()
+        print("ui已销毁✅")
+        jbui:Unload()
+    end,
+    DoubleClick = true
+})
